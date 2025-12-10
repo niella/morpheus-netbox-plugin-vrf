@@ -400,12 +400,12 @@ class NetBoxProvider implements IPAMProvider {
                     def networkInfo = getNetworkPoolConfig(it.prefix)
                     def addConfig = [account:poolServer.account, poolServer:poolServer, owner:poolServer.account, name:name, externalId:"${it.id}",
                                      cidr: cidr,type: poolType, poolEnabled:true, parentType:'NetworkPoolServer', parentId:poolServer.id, ipCount:networkInfo.config.ipCount,
-                                     netmask: cidrToNetmask("$cidr")] //,internalId:"${it.vrf?.id}"]
+                                     netmask: cidrToNetmask("$cidr")]
                     newNetworkPool = new NetworkPool(addConfig)
                     newNetworkPool.ipRanges = []
                     networkInfo.ranges?.each { range ->
                         log.debug("range: ${range}")
-                        rangeConfig = [networkPool:newNetworkPool, startAddress:range.startAddress, endAddress:range.endAddress, addressCount:networkInfo.config.ipCount] //,internalId:"${it.vrf?.id}"]
+                        rangeConfig = [networkPool:newNetworkPool, startAddress:range.startAddress, endAddress:range.endAddress, addressCount:networkInfo.config.ipCount]
                         addRange = new NetworkPoolRange(rangeConfig)
                         newNetworkPool.ipRanges.add(addRange)
                     }
@@ -413,7 +413,7 @@ class NetBoxProvider implements IPAMProvider {
                     poolType = new NetworkPoolType(code: 'netbox')
                     def addConfig = [account:poolServer.account, poolServer:poolServer, owner:poolServer.account, name:name, externalId:"${it.id}",
                                      cidr: cidr, type: poolType, poolEnabled:true, parentType:'NetworkPoolServer', parentId:poolServer.id,ipCount: size,
-                                     netmask: cidrToNetmask("$cidr")] //,internalId:"${it.vrf?.id}"]
+                                     netmask: cidrToNetmask("$cidr")]
                     newNetworkPool = new NetworkPool(addConfig)
                     newNetworkPool.ipRanges = []
                     rangeConfig = [cidr:cidr, startAddress:startAddress, endAddress:endAddress, addressCount:size]
@@ -473,10 +473,6 @@ class NetBoxProvider implements IPAMProvider {
                 def name = network?.description ? "${network.description} ${network.display} (Netbox: $poolServer.id)" : "${network?.display} (Netbox: $poolServer.id)"
                 def vrf = "${network?.vrf?.id}"
 
-                //if (existingItem?.internalId != vrf) {
-                //    existingItem.internalId = vrf
-                //    save = true
-                //}
                 if (poolToVrf["$existingItem.externalId"] != vrf) {
                     poolToVrf["$existingItem.externalId"] = vrf
                     persistVrf = true
@@ -662,7 +658,7 @@ class NetBoxProvider implements IPAMProvider {
                 def externalId = networkPoolIp.externalId.toString() + '/'
                 def vrfId = poolToVrf["$networkPool.externalId"]
 
-                requestOptions.body = JsonOutput.toJson(['address':networkPoolIp.ipAddress + '/' + networkPool.cidr.tokenize('/')[1],"dns_name":hostname, 'vrf_id': vrfId]) //networkPool?.internalId])
+                requestOptions.body = JsonOutput.toJson(['address':networkPoolIp.ipAddress + '/' + networkPool.cidr.tokenize('/')[1],"dns_name":hostname, 'vrf_id': vrfId])
 
                 results = client.callJsonApi(apiUrl,apiPath + externalId,null,null,requestOptions,'PUT')
 
@@ -877,7 +873,6 @@ class NetBoxProvider implements IPAMProvider {
         NetworkPoolIp item = morpheusContext.services.network.pool.poolIp.get(removeItem.id)
         //multiple ip records may exist, one for pool, one for range...
         List<NetworkPoolIp> ipList = morpheusContext.services.network.pool.poolIp.list(new DataQuery()
-                //.withFilter('internalId', item.internalId)
                 .withFilter('externalId', item.externalId)
                 .withFilter('ipAddress', item.ipAddress)
                 .withFilter('id', '!=', item.id)
@@ -915,7 +910,7 @@ class NetBoxProvider implements IPAMProvider {
             try {
                 ipToVrf["$it.id"] = "${it.vrf?.id}"
                 //log.info("Adding IP $it.address with vrf $it.vrf?.id")
-                def addConfig = [networkPool: pool, networkPoolRange: pool.ipRanges ? pool.ipRanges.first() : null, ipType: ipType, hostname: it.dns_name, ipAddress: ipAddress, externalId: it.id] //, internalId: "${it.vrf?.id}"]
+                def addConfig = [networkPool: pool, networkPoolRange: pool.ipRanges ? pool.ipRanges.first() : null, ipType: ipType, hostname: it.dns_name, ipAddress: ipAddress, externalId: it.id]
                 def newObj = new NetworkPoolIp(addConfig)
                 morpheus.services.network.pool.poolIp.bulkCreate([newObj])
             } catch (Exception e) {
@@ -952,10 +947,6 @@ class NetBoxProvider implements IPAMProvider {
                 } else if (types == 'deprecated') {
                     ipType = 'unmanaged'
                 }
-//                if (existingItem.internalId != vrfId) {
-//                    existingItem.internalId = vrfId
-//                    save = true
-//                }
                 if (ipToVrf["$existingItem.externalId"] != vrfId) {
                     ipToVrf["$existingItem.externalId"] = vrfId
                     persistVrfMap = true
@@ -1010,7 +1001,7 @@ class NetBoxProvider implements IPAMProvider {
                 while(hasMore && attempt < 1000) {
                     attempt++
 
-                    requestOptions.queryParams = [limit:maxResults.toString(),offset:start.toString(),'parent':networkPool.cidr.toString(),'vrf_id': vrfId] //"${networkPool.internalId}"]
+                    requestOptions.queryParams = [limit:maxResults.toString(),offset:start.toString(),'parent':networkPool.cidr.toString(),'vrf_id': vrfId]
                     def results = client.callJsonApi(apiUrl,apiPath,null,null,requestOptions,'GET')
                     log.debug("Netbox Pool API Call: $apiPath, $requestOptions.queryParams")
 
