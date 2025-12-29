@@ -1083,7 +1083,7 @@ class NetBoxProvider implements IPAMProvider {
 
                         } else if (results?.data?.results){
                             // If Reserved
-                            externalId = results.data.results.id
+                            externalId = results.data.results[0].id
                             apiPath = getServicePath(rpcConfig.serviceUrl) + getIpsPath + externalId + '/'
                             requestOptions.queryParams = [:]
                             requestOptions.body = JsonOutput.toJson(['address':networkPoolIp.ipAddress + '/' + networkPool.cidr.tokenize('/')[1],'status':'active',"dns_name":hostname,'tenant':rangeDetails?.data?.tenant?.id,'vrf':rangeDetails?.data?.vrf?.id,'tags':tags ?: []])
